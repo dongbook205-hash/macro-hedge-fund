@@ -1,15 +1,15 @@
 {
-  "botToken": "e02b6fe910a3c06bab22467917adcd53",
+  "botToken": "08b5a689903ae0fede6076c71eb36f99d05015b8c55857e166aa537258bdd2f5ead62586a17d6973335f73570b48c773",
   "encryptionByPinCode": false,
   "botTokenEncrypted": true,
   "deleteMessagesFromTelegram": false,
   "allowedChats": [
-    ""
+    "7995026196"
   ],
-  "mainDeviceId": "",
-  "pluginVersion": "",
+  "mainDeviceId": "a4f8dc34-9d11-4788-8193-b893b8f61bff",
+  "pluginVersion": "4.0.0",
   "telegramSessionType": "bot",
-  "telegramSessionId": 20260618102219468,
+  "telegramSessionId": 20260618102813460,
   "betaVersion": "",
   "connectionStatusIndicatorType": "CONSTANT",
   "cacheCleanupAtStartup": false,
@@ -34,7 +34,7 @@
   "parallelMessageProcessing": false,
   "processOldMessages": false,
   "processOldMessagesSettings": {
-    "lastProcessingDate": 1781745739,
+    "lastProcessingDate": 1781746372,
     "daysLimit": 14,
     "dialogsLimit": 100,
     "messagesLimit": 1000,
