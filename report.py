@@ -29,7 +29,8 @@ prompt = f"""
 print("최신 Gemini 비서에게 매크로 분석을 요청합니다...")
 try:
     response = client.models.generate_content(
-        model='gemini-1.5-flash',
+       # 수정 후 최신 코드
+model='gemini-2.5-flash',
         contents=prompt,
     )
     report_content = response.text
