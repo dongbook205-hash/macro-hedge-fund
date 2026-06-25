@@ -2,7 +2,6 @@ name: Daily Macro CIO Report Automation
 
 on:
   schedule:
-    # UTC 기준 20:00 (한국시간 새벽 05:00)
     - cron: '0 20 * * *'
   workflow_dispatch:
 
@@ -34,67 +33,6 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python report.py
-
-      - name: Send Email via Python Script
-        env:
-          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
-          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-          MAIL_TO: ${{ secrets.MAIL_TO }}
-        run: |
-          python - <<'EOF'
-          import os
-          import smtplib
-          import glob
-          from email.mime.text import MIMEText
-          from email.header import Header
-
-          username = os.environ["MAIL_USERNAME"]
-          password = os.environ["MAIL_PASSWORD"]
-          to_email = os.environ["MAIL_TO"]
-
-          md_files = sorted(
-              glob.glob("*.md"),
-              key=os.path.getmtime,
-              reverse=True
-          )
-
-          if md_files:
-              latest_file = md_files[0]
-              print(f"리포트 파일 발견: {latest_file}")
-
-              with open(latest_file, "r", encoding="utf-8") as f:
-                  body_content = f.read()
-          else:
-              body_content = "생성된 마크다운 리포트 파일을 찾을 수 없습니다."
-
-          msg = MIMEText(body_content, "plain", "utf-8")
-          msg["Subject"] = Header(
-              "[Daily Macro CIO Report] 오늘의 AI 분석 보고서 전문",
-              "utf-8"
-          )
-          msg["From"] = f"AI Report Automation <{username}>"
-          msg["To"] = to_email
-
-          try:
-              print("Gmail SMTP 접속 중...")
-
-              with smtplib.SMTP_SSL(
-                  "smtp.gmail.com",
-                  465
-              ) as server:
-                  server.login(username, password)
-                  server.sendmail(
-                      username,
-                      [to_email],
-                      msg.as_string()
-                  )
-
-              print("이메일 발송 성공")
-
-          except Exception as e:
-              print(f"이메일 발송 실패: {e}")
-              raise
-          EOF
 
       - name: Commit and Push to GitHub (Obsidian Sync)
         run: |
