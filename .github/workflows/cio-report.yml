@@ -31,10 +31,28 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       run: python report.py
 
+    # ✉️ [추가] 생성된 파일 내용 전문을 이메일로 발송하는 단계
+    - name: Send Email via Gmail
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        username: ${{ secrets.MAIL_USERNAME }}
+        password: ${{ secrets.MAIL_PASSWORD }}
+        
+        # 메일 기본 정보 설정
+        subject: "[Daily Macro CIO Report] 오늘의 AI 분석 보고서 전문"
+        to: user@example.com  # 👈 여기에 리포트를 받아볼 본인의 이메일 주소를 입력하세요!
+        from: AI Report Automation
+        
+        # report.py가 생성하는 파일의 전체 텍스트 내용을 메일 본문으로 지정
+        # 파일명이 매일 바뀌지 않는다면 'report.md' 등으로 지정하고, 날짜형식 파일명이라면 아래 가이드를 참고하세요.
+       # 파일명이 매일 바뀌는 경우 파일 내용을 읽어와서 본문에 꽂아 넣는 방식
+body: |
+  $(cat *.md)  # 저장소 내의 마크다운 파일 내용 전체를 읽어옴
     - name: Commit and Push to GitHub (Obsidian Sync)
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add .
         git diff --quiet && git diff --staged --quiet || (git commit -m "Add Daily CIO Report $(date +'%Y-%m-%d')" && git push)
-      
