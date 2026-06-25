@@ -2,7 +2,6 @@ name: Daily Macro CIO Report Automation
 
 on:
   schedule:
-    # 한국 시간(UTC+9) 매일 새벽 05:00 자동 실행 (지연 방지를 위해 앞당김)
     - cron: '0 20 * * *'
   workflow_dispatch: # 수동 실행 버튼 활성화
 
@@ -12,17 +11,17 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4  # 최신 버전으로 업그레이드하여 경고 제거
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v5  # 최신 버전으로 업그레이드
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.11'  # 안정적인 파이썬 버전
+        python-version: '3.11'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests google-genai  # 최신 구글 AI SDK 설치
+        pip install requests google-genai
 
     - name: Run AI Research Script
       env:
@@ -31,21 +30,52 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       run: python report.py
 
-    # ✉️ 이메일 발송 단계 (오류 차단을 위해 file_as_body 방식으로 전면 수정)
-    - name: Send Email via Gmail
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        username: ${{ secrets.MAIL_USERNAME }}
-        password: ${{ secrets.MAIL_PASSWORD }}
-        subject: "[Daily Macro CIO Report] 오늘의 AI 분석 보고서 전문"
-        to: user@example.com  # 👈 여기에 실제 받으실 이메일 주소를 입력하세요!
-        from: AI Report Automation
-        
-        # 💡 [핵심 변경] report.py가 최종적으로 만들어내는 마크다운 파일명을 지정합니다.
-        # 만약 파일명이 매일 바뀌는 구조라면 'report.md' 대신 아래의 우회법을 참고하세요.
-        file_as_body: report.md  
+    # ✉️ [전면 수정] 플러그인 버그 우회를 위해 파이썬 직접 발송 방식으로 변경
+    - name: Send Email via Python Script
+      env:
+        MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+        MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+        # 👇 메일을 실제 수신하실 이메일 주소를 여기에 적어주세요!
+        MAIL_TO: user@example.com 
+      run: |
+        python - <<EOF
+        import os
+        import smtplib
+        import glob
+        from email.mime.text import MIMEText
+        from email.header import Header
+
+        # 1. 환경 변수에서 계정 정보 및 수신자 가져오기
+        username = os.environ['MAIL_USERNAME']
+        password = os.environ['MAIL_PASSWORD']
+        to_email = os.environ['MAIL_TO']
+
+        # 2. 이번에 생성된 마크다운 리포트 파일 찾아서 내용 읽기
+        md_files = glob.glob("*.md")
+        if md_files:
+            # 가장 최근에 수정되었거나 첫 번째로 발견된 md 파일을 읽습니다.
+            with open(md_files[0], 'r', encoding='utf-8') as f:
+                body_content = f.read()
+        else:
+            body_content = "생성된 마크다운 리포트 파일을 찾을 수 없습니다."
+
+        # 3. 이메일 객체 생성
+        msg = MIMEText(body_content, 'plain', 'utf-8')
+        msg['Subject'] = Header("[Daily Macro CIO Report] 오늘의 AI 분석 보고서 전문", 'utf-8')
+        msg['From'] = f"AI Report Automation <{username}>"
+        msg['To'] = to_email
+
+        # 4. 구글 SMTP 서버 접속 및 발송
+        try:
+            print("구글 SMTP 서버에 연결 시도 중...")
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                server.login(username, password)
+                server.sendmail(username, [to_email], msg.as_string())
+            print("이메일 발송 성공!")
+        except Exception as e:
+            print(f"이메일 발송 실패 오류 내용: {e}")
+            raise e
+        EOF
 
     - name: Commit and Push to GitHub (Obsidian Sync)
       run: |
