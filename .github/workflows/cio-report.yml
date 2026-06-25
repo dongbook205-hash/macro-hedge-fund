@@ -17,7 +17,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5  # 최신 버전으로 업그레이드
       with:
-        python-version: '3.11'  # 2026년 기준 가장 안정적인 파이썬 버전
+        python-version: '3.11'  # 안정적인 파이썬 버전
 
     - name: Install dependencies
       run: |
@@ -31,7 +31,7 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       run: python report.py
 
-    # ✉️ 이메일 발송 단계 (들여쓰기 문법 오류 수정 완료)
+    # ✉️ 이메일 발송 단계 (오류 차단을 위해 file_as_body 방식으로 전면 수정)
     - name: Send Email via Gmail
       uses: dawidd6/action-send-mail@v3
       with:
@@ -42,9 +42,10 @@ jobs:
         subject: "[Daily Macro CIO Report] 오늘의 AI 분석 보고서 전문"
         to: user@example.com  # 👈 여기에 실제 받으실 이메일 주소를 입력하세요!
         from: AI Report Automation
-        # 파일 내용을 읽어와 메일 본문에 채워 넣는 올바른 문법입니다.
-        body: |
-          $(cat *.md)
+        
+        # 💡 [핵심 변경] report.py가 최종적으로 만들어내는 마크다운 파일명을 지정합니다.
+        # 만약 파일명이 매일 바뀌는 구조라면 'report.md' 대신 아래의 우회법을 참고하세요.
+        file_as_body: report.md  
 
     - name: Commit and Push to GitHub (Obsidian Sync)
       run: |
